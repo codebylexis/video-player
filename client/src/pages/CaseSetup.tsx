@@ -102,27 +102,26 @@ export default function CaseSetup() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const uploadedVideos = videoSlots.filter(slot => slot.file !== null);
     if (uploadedVideos.length === 0) {
       toast.error("Please upload at least one video");
       return;
     }
-    
-    // Store actual file objects in window object for access in Home.tsx
+
     const uploadedFileArray: (File | null)[] = new Array(4).fill(null);
     videoSlots.forEach(slot => {
       if (slot.file) {
         uploadedFileArray[slot.position] = slot.file;
       }
     });
+
     (window as any).uploadedVideoFiles = uploadedFileArray;
     (window as any).videoSlotMapping = videoSlots.map(slot => ({
       position: slot.position,
       fileName: slot.file ? slot.file.name : null
     }));
 
-    // Store video data with position information
     localStorage.setItem("caseSetup", JSON.stringify({
       notes,
       questions: questions.filter(q => q.trim() !== ""),
@@ -134,7 +133,7 @@ export default function CaseSetup() {
         label: slot.label
       }))
     }));
-    
+
     toast.success("Case initialized with " + uploadedVideos.length + " video(s)");
     setLocation("/analysis");
   };
@@ -142,11 +141,20 @@ export default function CaseSetup() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8">
       <div className="max-w-5xl mx-auto space-y-8">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">New Case Setup</h1>
-          <p className="text-muted-foreground">
-            Configure preliminary data and arrange your surgical video feeds before starting analysis.
-          </p>
+        <div className="flex items-start gap-4">
+          <img
+            src="/placeholders/logo.png"
+            alt="Company Logo"
+            className="h-14 w-14 object-contain shrink-0"
+          />
+          <div className="space-y-2 pt-1">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+              New Case Setup
+            </h1>
+            <p className="text-muted-foreground">
+              Configure preliminary data and arrange your surgical video feeds before starting analysis.
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -160,9 +168,9 @@ export default function CaseSetup() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="notes">Preliminary Notes</Label>
-                <Textarea 
-                  id="notes" 
-                  placeholder="Enter patient history, pre-op conditions, or specific areas of interest..." 
+                <Textarea
+                  id="notes"
+                  placeholder="Enter patient history, pre-op conditions, or specific areas of interest..."
                   className="min-h-[120px]"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -180,7 +188,7 @@ export default function CaseSetup() {
                 <div className="space-y-3">
                   {questions.map((q, i) => (
                     <div key={i} className="flex gap-2">
-                      <Input 
+                      <Input
                         placeholder={`Research Question ${i + 1}`}
                         value={q}
                         onChange={(e) => handleQuestionChange(i, e.target.value)}
@@ -198,10 +206,11 @@ export default function CaseSetup() {
               <div className="space-y-4">
                 <div>
                   <Label>Surgical Video Feeds (2x2 Grid)</Label>
-                  <p className="text-sm text-muted-foreground mt-1">Drag and drop videos into the positions below. Each position will maintain its placement in the analysis view.</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Drag and drop videos into the positions below. Each position will maintain its placement in the analysis view.
+                  </p>
                 </div>
-                
-                {/* 2x2 Grid Layout */}
+
                 <div className="grid grid-cols-2 gap-4">
                   {videoSlots.map((slot) => (
                     <div
@@ -217,13 +226,13 @@ export default function CaseSetup() {
                           : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900"
                       }`}
                     >
-                      <input 
-                        type="file" 
-                        className="absolute inset-0 opacity-0 cursor-pointer" 
+                      <input
+                        type="file"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
                         accept="video/*"
                         onChange={(e) => handleSlotInputChange(e, slot.position)}
                       />
-                      
+
                       {slot.file ? (
                         <div className="flex flex-col items-center gap-2 w-full">
                           <Video className="h-6 w-6 text-primary" />
@@ -233,9 +242,9 @@ export default function CaseSetup() {
                               {(slot.file.size / (1024 * 1024)).toFixed(2)} MB
                             </p>
                           </div>
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
+                          <Button
+                            type="button"
+                            variant="ghost"
                             size="sm"
                             onClick={() => removeVideoFromSlot(slot.position)}
                             className="mt-2"
@@ -255,7 +264,6 @@ export default function CaseSetup() {
                   ))}
                 </div>
 
-                {/* Summary */}
                 <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4">
                   <p className="text-sm font-medium">
                     Videos uploaded: {videoSlots.filter(s => s.file !== null).length} of 4
@@ -266,9 +274,9 @@ export default function CaseSetup() {
               <div className="space-y-2">
                 <Label>Research Paper / Protocol</Label>
                 <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer relative">
-                  <input 
-                    type="file" 
-                    className="absolute inset-0 opacity-0 cursor-pointer" 
+                  <input
+                    type="file"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
                     accept=".pdf,.doc,.docx"
                     onChange={handleFileChange}
                   />
@@ -288,9 +296,9 @@ export default function CaseSetup() {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setLocation("/analysis")}
               >
                 Skip (Dev)
