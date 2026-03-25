@@ -270,7 +270,6 @@ export default function Home() {
       caseSetup.videoSlots.forEach((slot: { position: number }) => {
         const url = uploadedVideoUrls[slot.position];
         if (url && slot.position >= 0 && slot.position < nextFeeds.length) {
-          console.log("SETTING VIDEO:", slot.position, url);
           nextFeeds[slot.position] = url;
         }
       });
