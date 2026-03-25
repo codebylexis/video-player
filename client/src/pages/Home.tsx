@@ -14,6 +14,8 @@ import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useHistory } from "@/hooks/useHistory";
+import { useLocation } from "wouter";
+import { getVideoUrls } from "@/lib/videoStore";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import {
   DropdownMenu,
@@ -54,6 +56,7 @@ export default function Home() {
   const [layout, setLayout] = useState<"single" | "split" | "quad">("single");
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
+  const [location, setLocation] = useLocation();
   const [viewMode, setViewMode] = useState<"analysis" | "insights">("analysis");
   const [videoFeeds, setVideoFeeds] = useState<string[]>([
     "/placeholders/surgical-field.jpg",
@@ -238,46 +241,27 @@ export default function Home() {
 
   // Load uploaded videos from session storage
   useEffect(() => {
-    try {
-      const uploadedVideoUrlsStr = sessionStorage.getItem("uploadedVideoUrls");
-      const caseSetupStr = localStorage.getItem("caseSetup");
+    const uploadedVideoUrls = getVideoUrls();
 
-      console.log("SESSION VIDEO URLS RAW:", uploadedVideoUrlsStr);
-
-      if (!uploadedVideoUrlsStr || !caseSetupStr) {
-        console.warn("No uploaded videos found in storage");
-        return;
-      }
-
-      const uploadedVideoUrls = JSON.parse(uploadedVideoUrlsStr) as (string | null)[];
-      const caseSetup = JSON.parse(caseSetupStr);
-
-      console.log("PARSED VIDEO URLS:", uploadedVideoUrls);
-      console.log("CASE SETUP VIDEO SLOTS:", caseSetup?.videoSlots);
-
-      if (!Array.isArray(uploadedVideoUrls) || !Array.isArray(caseSetup.videoSlots)) {
-        console.error("Invalid uploaded video data");
-        return;
-      }
-
-      const nextFeeds: string[] = [
-        "/placeholders/surgical-field.jpg",
-        "/placeholders/echo-monitor.jpg",
-        "/placeholders/instrument-table.jpg",
-        "/placeholders/room-view.png"
-      ];
-
-      caseSetup.videoSlots.forEach((slot: { position: number }) => {
-        const url = uploadedVideoUrls[slot.position];
-        if (url && slot.position >= 0 && slot.position < nextFeeds.length) {
-          nextFeeds[slot.position] = url;
-        }
-      });
-
-      setVideoFeeds(nextFeeds);
-    } catch (error) {
-      console.error("Error loading uploaded videos:", error);
+    if (!uploadedVideoUrls || uploadedVideoUrls.every(url => url === null)) {
+      console.warn("No uploaded videos found");
+      return;
     }
+
+    const nextFeeds: string[] = [
+      "/placeholders/surgical-field.jpg",
+      "/placeholders/echo-monitor.jpg",
+      "/placeholders/instrument-table.jpg",
+      "/placeholders/room-view.png"
+  ] ;
+
+    uploadedVideoUrls.forEach((url: string | null, position: number) => {
+      if (url && position >= 0 && position < nextFeeds.length) {
+        nextFeeds[position] = url;
+      }
+    });
+
+    setVideoFeeds(nextFeeds);
   }, []);
 
   // Pop-out Window Logic

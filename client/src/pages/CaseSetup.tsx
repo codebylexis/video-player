@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { FileText, Upload, ArrowRight, Plus, Trash2, Video, X } from "lucide-react";
 import { toast } from "sonner";
+import { setVideoUrls } from "@/lib/videoStore";
 
 interface VideoSlot {
   file: File | null;
@@ -100,7 +101,7 @@ export default function CaseSetup() {
     toast.success("Video removed");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     const uploadedVideos = videoSlots.filter((slot) => slot.file !== null);
@@ -109,36 +110,31 @@ export default function CaseSetup() {
       return;
     }
 
-    const uploadedVideoUrls: (string | null)[] = new Array(4).fill(null);
-
-    const toBase64 = (file: File): Promise<string> =>
-      new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-    const base64Results = await Promise.all(
-      videoSlots.map(async (slot) => {
-        if (slot.file) {
-          const base64 = await toBase64(slot.file);
-          return { position: slot.position, url: base64 };
-        }
-        return null;
-      })
-    );
-
-    base64Results.forEach((result) => {
-      if (result) {
-        uploadedVideoUrls[result.position] = result.url;
+    const videoUrls: (string | null)[] = new Array(4).fill(null);
+    videoSlots.forEach((slot) => {
+      if (slot.file) {
+        videoUrls[slot.position] = URL.createObjectURL(slot.file);
       }
     });
 
-    sessionStorage.setItem("uploadedVideoUrls", JSON.stringify(uploadedVideoUrls));
+    // Save metadata only (no file blobs)
+    localStorage.setItem("caseSetup", JSON.stringify({
+      notes,
+      questions: questions.filter((q) => q.trim() !== ""),
+      fileName: file ? file.name : null,
+      videoSlots: videoSlots.map((slot) => ({
+        position: slot.position,
+        fileName: slot.file ? slot.file.name : null,
+        fileSize: slot.file ? slot.file.size : null,
+        label: slot.label
+      }))
+    }));
+
     toast.success("Case initialized with " + uploadedVideos.length + " video(s)");
+    setVideoUrls(videoUrls);
     setLocation("/analysis");
   };
+
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8">
