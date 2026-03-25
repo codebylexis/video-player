@@ -508,6 +508,27 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
                       swappingPositions.has(index) && "opacity-50"
                     )}
                   />
+                ) : resolvedUrl.startsWith("blob:") ? (
+                  <video
+                    key={resolvedUrl}
+                    src={resolvedUrl}
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    autoPlay={playing}
+                    muted={muted || index !== activeView}
+                    playsInline
+                    onTimeUpdate={(e) => {
+                      if (index === activeView) {
+                        const video = e.currentTarget;
+                        if (video.duration) {
+                          handleProgress({ played: video.currentTime / video.duration });
+                          setDuration(video.duration);
+                        }
+                      }
+                    }}
+                    ref={(el) => {
+                      if (el) (playerRefs.current[index] as any) = el;
+                    }}
+                  />
                 ) : (
                   <ReactPlayer
                     ref={(el: any) => {
