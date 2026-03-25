@@ -237,42 +237,41 @@ export default function Home() {
   ]);
 
   // Load uploaded videos from session storage
-  useEffect(() => {{
-    const loadUploadedVideos = async () => {{
-      try {{
-        const caseSetupStr = localStorage.getItem("caseSetup");
-        if (caseSetupStr) {{
-          const caseSetup = JSON.parse(caseSetupStr);
-          if (caseSetup.videoSlots) {{
-            // Get video files from window object (passed from CaseSetup)
-            const uploadedVideos: string[] = [
-              "/placeholders/surgical-field.jpg",
-              "/placeholders/echo-monitor.jpg",
-              "/placeholders/instrument-table.jpg",
-              "/placeholders/room-view.png"
-            ];
-            
-            // Check if there are video files in window.uploadedVideoFiles
-            const windowAny = window as any;
-            if (windowAny.uploadedVideoFiles && Array.isArray(windowAny.uploadedVideoFiles)) {{
-              windowAny.uploadedVideoFiles.forEach((file: File, index: number) => {{
-                if (index < 4) {{
-                  const objectUrl = URL.createObjectURL(file);
-                  uploadedVideos[index] = objectUrl;
-                }}
-              }});
-            }}
-            
-            setVideoFeeds(uploadedVideos);
-          }}
-        }}
-      }} catch (error) {{
-        console.error("Error loading uploaded videos:", error);
-      }}
-    }};
-    
-    loadUploadedVideos();
-  }}, []);
+  useEffect(() => {
+    try {
+      const uploadedVideoUrlsStr = sessionStorage.getItem("uploadedVideoUrls");
+      const caseSetupStr = localStorage.getItem("caseSetup");
+
+      if (!uploadedVideoUrlsStr || !caseSetupStr) {
+        return;
+      }
+
+      const uploadedVideoUrls = JSON.parse(uploadedVideoUrlsStr) as (string | null)[];
+      const caseSetup = JSON.parse(caseSetupStr);
+
+      if (!Array.isArray(uploadedVideoUrls) || !caseSetup.videoSlots) {
+        return;
+      }
+
+      const nextFeeds: string[] = [
+        "/placeholders/surgical-field.jpg",
+        "/placeholders/echo-monitor.jpg",
+        "/placeholders/instrument-table.jpg",
+        "/placeholders/room-view.png"
+      ];
+
+      caseSetup.videoSlots.forEach((slot: { position: number }) => {
+        const url = uploadedVideoUrls[slot.position];
+        if (url && slot.position >= 0 && slot.position < nextFeeds.length) {
+          nextFeeds[slot.position] = url;
+        }
+      });
+
+      setVideoFeeds(nextFeeds);
+    } catch (error) {
+      console.error("Error loading uploaded videos:", error);
+    }
+  }, []);
 
   // Pop-out Window Logic
   useEffect(() => {

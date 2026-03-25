@@ -1,314 +1,280 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
-import { useLocation } from "wouter";
-import { FileText, Upload, ArrowRight, Plus, Trash2, Video, X } from "lucide-react";
-import { toast } from "sonner";
+import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
+import {
+  FastForward,
+  Maximize,
+  Minimize,
+  Pause,
+  Play,
+  Rewind,
+  Volume2,
+  VolumeX
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+// @ts-ignore
+import ReactPlayer from "react-player";
+import screenfull from "screenfull";
 
-interface VideoSlot {
-  file: File | null;
-  label: string;
-  position: number;
+interface VideoPlayerProps {
+  url: string;
+  className?: string;
 }
 
-export default function CaseSetup() {
-  const [, setLocation] = useLocation();
-  const [notes, setNotes] = useState("");
-  const [questions, setQuestions] = useState<string[]>([""]);
-  const [file, setFile] = useState<File | null>(null);
-  const [videoSlots, setVideoSlots] = useState<VideoSlot[]>([
-    { file: null, label: "Position 1 (Top-Left)", position: 0 },
-    { file: null, label: "Position 2 (Top-Right)", position: 1 },
-    { file: null, label: "Position 3 (Bottom-Left)", position: 2 },
-    { file: null, label: "Position 4 (Bottom-Right)", position: 3 }
-  ]);
-  const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
+export function VideoPlayer({ url, className }: VideoPlayerProps) {
+  const playerRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [volume, setVolume] = useState(0.8);
+  const [muted, setMuted] = useState(false);
+  const [played, setPlayed] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleAddQuestion = () => {
-    setQuestions([...questions, ""]);
+  // Format time in MM:SS or HH:MM:SS
+  const formatTime = (seconds: number) => {
+    const date = new Date(seconds * 1000);
+    const hh = date.getUTCHours();
+    const mm = date.getUTCMinutes();
+    const ss = date.getUTCSeconds().toString().padStart(2, "0");
+    if (hh) {
+      return `${hh}:${mm.toString().padStart(2, "0")}:${ss}`;
+    }
+    return `${mm}:${ss}`;
   };
 
-  const handleQuestionChange = (index: number, value: string) => {
-    const newQuestions = [...questions];
-    newQuestions[index] = value;
-    setQuestions(newQuestions);
-  };
+  // Handle play/pause toggle
+  const togglePlay = () => setPlaying(!playing);
 
-  const handleRemoveQuestion = (index: number) => {
-    const newQuestions = questions.filter((_, i) => i !== index);
-    setQuestions(newQuestions);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      toast.success("Research paper attached");
+  // Handle fullscreen toggle
+  const toggleFullscreen = () => {
+    if (screenfull.isEnabled && containerRef.current) {
+      screenfull.toggle(containerRef.current);
     }
   };
 
-  const handleDragOver = (e: React.DragEvent, slotIndex: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverSlot(slotIndex);
+  // Sync fullscreen state
+  useEffect(() => {
+    if (screenfull.isEnabled) {
+      const handleChange = () => {
+        setIsFullscreen(screenfull.isFullscreen);
+      };
+      screenfull.on("change", handleChange);
+      return () => screenfull.off("change", handleChange);
+    }
+  }, []);
+
+  // Handle progress update
+  const handleProgress = (state: { played: number }) => {
+    setPlayed(state.played);
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverSlot(null);
+  // Handle seek
+  const handleSeek = (value: number[]) => {
+    setPlayed(value[0]);
+    playerRef.current?.seekTo(value[0]);
   };
 
-  const handleDropOnSlot = (e: React.DragEvent, slotIndex: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverSlot(null);
+  // Handle volume change
+  const handleVolumeChange = (value: number[]) => {
+    setVolume(value[0]);
+    setMuted(value[0] === 0);
+  };
 
-    if (e.dataTransfer.files) {
-      const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile.type.startsWith("video/")) {
-        const newSlots = [...videoSlots];
-        newSlots[slotIndex].file = droppedFile;
-        setVideoSlots(newSlots);
-        toast.success(`Video dropped in ${newSlots[slotIndex].label}`);
-      } else {
-        toast.error(`${droppedFile.name} is not a video file`);
+  // Handle rewind/fast-forward
+  const skip = (seconds: number) => {
+    const currentTime = playerRef.current?.getCurrentTime();
+    if (currentTime !== undefined) {
+      playerRef.current?.seekTo(currentTime + seconds);
+    }
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if no input is focused
+      if (["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName)) return;
+
+      switch (e.key.toLowerCase()) {
+        case " ":
+        case "k":
+          e.preventDefault();
+          togglePlay();
+          break;
+        case "f":
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case "arrowleft":
+          e.preventDefault();
+          skip(-5);
+          break;
+        case "arrowright":
+          e.preventDefault();
+          skip(5);
+          break;
+        case "j":
+          e.preventDefault();
+          skip(-10);
+          break;
+        case "l":
+          e.preventDefault();
+          skip(10);
+          break;
+        case "m":
+          e.preventDefault();
+          setMuted(!muted);
+          break;
       }
-    }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [playing, muted, isFullscreen]);
+
+  // Auto-hide controls
+  const handleMouseMove = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (playing) setShowControls(false);
+    }, 3000);
   };
 
-  const handleSlotInputChange = (e: React.ChangeEvent<HTMLInputElement>, slotIndex: number) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (file.type.startsWith("video/")) {
-        const newSlots = [...videoSlots];
-        newSlots[slotIndex].file = file;
-        setVideoSlots(newSlots);
-        toast.success(`Video added to ${newSlots[slotIndex].label}`);
-      } else {
-        toast.error(`${file.name} is not a video file`);
-      }
-    }
-  };
-
-  const removeVideoFromSlot = (slotIndex: number) => {
-    const newSlots = [...videoSlots];
-    newSlots[slotIndex].file = null;
-    setVideoSlots(newSlots);
-    toast.success("Video removed");
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const uploadedVideos = videoSlots.filter(slot => slot.file !== null);
-    if (uploadedVideos.length === 0) {
-      toast.error("Please upload at least one video");
-      return;
-    }
-
-    const uploadedFileArray: (File | null)[] = new Array(4).fill(null);
-    videoSlots.forEach(slot => {
-      if (slot.file) {
-        uploadedFileArray[slot.position] = slot.file;
-      }
-    });
-
-    (window as any).uploadedVideoFiles = uploadedFileArray;
-    (window as any).videoSlotMapping = videoSlots.map(slot => ({
-      position: slot.position,
-      fileName: slot.file ? slot.file.name : null
-    }));
-
-    localStorage.setItem("caseSetup", JSON.stringify({
-      notes,
-      questions: questions.filter(q => q.trim() !== ""),
-      fileName: file ? file.name : null,
-      videoSlots: videoSlots.map(slot => ({
-        position: slot.position,
-        fileName: slot.file ? slot.file.name : null,
-        fileSize: slot.file ? slot.file.size : null,
-        label: slot.label
-      }))
-    }));
-
-    toast.success("Case initialized with " + uploadedVideos.length + " video(s)");
-    setLocation("/analysis");
-  };
+  // Create a wrapper component to handle the ref forwarding issue
+  const Player = ReactPlayer as any;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8">
-      <div className="max-w-5xl mx-auto space-y-8">
-        <div className="flex items-start gap-4">
-          <img
-            src="/placeholders/logo.png"
-            alt="Company Logo"
-            className="h-14 w-14 object-contain shrink-0"
+    <div
+      ref={containerRef}
+      className={cn(
+        "relative group bg-black overflow-hidden select-none cyber-panel",
+        className
+      )}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => playing && setShowControls(false)}
+      onDoubleClick={toggleFullscreen}
+    >
+      {/* CRT Scanline Effect */}
+      <div className="scanline pointer-events-none z-10" />
+
+      {/* Video Layer */}
+      <Player
+        ref={playerRef}
+        url={url}
+        width="100%"
+        height="100%"
+        playing={playing}
+        volume={volume}
+        muted={muted}
+        onProgress={handleProgress}
+        onDuration={setDuration}
+        style={{ position: "absolute", top: 0, left: 0 }}
+      />
+
+      {/* Controls Overlay */}
+      <div
+        className={cn(
+          "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-4 pt-12 transition-opacity duration-300 z-20",
+          showControls ? "opacity-100" : "opacity-0"
+        )}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()} // Prevent double-click propagation
+      >
+        {/* Progress Bar */}
+        <div className="mb-4 flex items-center gap-2 group/slider">
+          <Slider
+            value={[played]}
+            max={1}
+            step={0.001}
+            onValueChange={handleSeek}
+            className="cursor-pointer"
           />
-          <div className="space-y-2 pt-1">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-              New Case Setup
-            </h1>
-            <p className="text-muted-foreground">
-              Configure preliminary data and arrange your surgical video feeds before starting analysis.
-            </p>
-          </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Preliminary Documentation</CardTitle>
-              <CardDescription>
-                Record initial observations and attach relevant research materials.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="notes">Preliminary Notes</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Enter patient history, pre-op conditions, or specific areas of interest..."
-                  className="min-h-[120px]"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+        {/* Control Panel */}
+        <div className="flex items-center justify-between font-mono text-primary">
+          <div className="flex items-center gap-4">
+            {/* Play/Pause */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={togglePlay}
+              className="cyber-button hover:bg-primary/20 hover:text-primary text-primary/80"
+            >
+              {playing ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+            </Button>
+
+            {/* Rewind/Fast Forward */}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => skip(-10)}
+                className="cyber-button hover:bg-primary/20 hover:text-primary text-primary/80"
+              >
+                <Rewind className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => skip(10)}
+                className="cyber-button hover:bg-primary/20 hover:text-primary text-primary/80"
+              >
+                <FastForward className="h-5 w-5" />
+              </Button>
+            </div>
+
+            {/* Volume */}
+            <div className="flex items-center gap-2 group/volume">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMuted(!muted)}
+                className="cyber-button hover:bg-primary/20 hover:text-primary text-primary/80"
+              >
+                {muted || volume === 0 ? (
+                  <VolumeX className="h-5 w-5" />
+                ) : (
+                  <Volume2 className="h-5 w-5" />
+                )}
+              </Button>
+              <div className="w-0 overflow-hidden transition-all duration-300 group-hover/volume:w-24">
+                <Slider
+                  value={[muted ? 0 : volume]}
+                  max={1}
+                  step={0.01}
+                  onValueChange={handleVolumeChange}
+                  className="w-20"
                 />
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Research Questions</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddQuestion}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Question
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  {questions.map((q, i) => (
-                    <div key={i} className="flex gap-2">
-                      <Input
-                        placeholder={`Research Question ${i + 1}`}
-                        value={q}
-                        onChange={(e) => handleQuestionChange(i, e.target.value)}
-                      />
-                      {questions.length > 1 && (
-                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveQuestion(i)}>
-                          <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {/* Timecode */}
+            <div className="text-sm tracking-widest opacity-80">
+              <span className="text-primary">{formatTime(played * duration)}</span>
+              <span className="mx-1 text-muted-foreground">/</span>
+              <span className="text-muted-foreground">{formatTime(duration)}</span>
+            </div>
+          </div>
 
-              <div className="space-y-4">
-                <div>
-                  <Label>Surgical Video Feeds (2x2 Grid)</Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Drag and drop videos into the positions below. Each position will maintain its placement in the analysis view.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {videoSlots.map((slot) => (
-                    <div
-                      key={slot.position}
-                      onDragOver={(e) => handleDragOver(e, slot.position)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDropOnSlot(e, slot.position)}
-                      className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer relative min-h-[200px] ${
-                        dragOverSlot === slot.position
-                          ? "border-primary bg-primary/10"
-                          : slot.file
-                          ? "border-primary/50 bg-primary/5"
-                          : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900"
-                      }`}
-                    >
-                      <input
-                        type="file"
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                        accept="video/*"
-                        onChange={(e) => handleSlotInputChange(e, slot.position)}
-                      />
-
-                      {slot.file ? (
-                        <div className="flex flex-col items-center gap-2 w-full">
-                          <Video className="h-6 w-6 text-primary" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{slot.file.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {(slot.file.size / (1024 * 1024)).toFixed(2)} MB
-                            </p>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeVideoFromSlot(slot.position)}
-                            className="mt-2"
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Remove
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <Video className="h-8 w-8 text-muted-foreground mb-2" />
-                          <p className="text-sm font-medium">{slot.label}</p>
-                          <p className="text-xs text-muted-foreground">Click or drag video here</p>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4">
-                  <p className="text-sm font-medium">
-                    Videos uploaded: {videoSlots.filter(s => s.file !== null).length} of 4
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Research Paper / Protocol</Label>
-                <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer relative">
-                  <input
-                    type="file"
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleFileChange}
-                  />
-                  {file ? (
-                    <div className="flex items-center text-primary font-medium">
-                      <FileText className="h-8 w-8 mr-3" />
-                      {file.name}
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-sm font-medium">Click to upload or drag and drop</p>
-                      <p className="text-xs text-muted-foreground">PDF, DOCX up to 10MB</p>
-                    </>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setLocation("/analysis")}
-              >
-                Skip (Dev)
-              </Button>
-              <Button type="submit" size="lg" className="gap-2">
-                Start Analysis <ArrowRight className="h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        </form>
+          <div className="flex items-center gap-4">
+            {/* Fullscreen */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleFullscreen}
+              className="cyber-button hover:bg-primary/20 hover:text-primary text-primary/80"
+            >
+              {isFullscreen ? (
+                <Minimize className="h-5 w-5" />
+              ) : (
+                <Maximize className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
