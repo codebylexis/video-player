@@ -433,7 +433,7 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
               <div
                 key={index}
                 className={cn(
-                  "relative bg-black group",
+                  "relative bg-black group w-full h-full",
                   gridClass,
                   swapSource === index && "ring-2 ring-yellow-500 z-50",
                   swappingPositions.has(index) && "swap-animation"
@@ -526,7 +526,7 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
                       onError: (error: any) => {
                         console.error(`Video failed to load for view ${index}:`, resolvedUrl, error);
                       },
-                      style: { pointerEvents: "none" }
+                      style: { pointerEvents: "none", position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }
                     } as any)}
                   />
                 )}
