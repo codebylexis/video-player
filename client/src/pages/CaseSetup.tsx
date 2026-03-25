@@ -143,7 +143,7 @@ export default function CaseSetup() {
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex items-start gap-4">
           <img
-            src="/placeholders/logo.png"
+            src="/placeholders/logo2.png"
             alt="Company Logo"
             className="h-14 w-14 object-contain shrink-0"
           />
