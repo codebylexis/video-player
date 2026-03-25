@@ -187,7 +187,7 @@ export default function Home() {
           type: "SYNC_STATE",
           payload: {
             currentTime: currentTime,
-            loggedEvents: projectState.events.filter(e => e.type !== 'instrument'), // Only manual events
+            loggedEvents: projectState.events.filter(e => e.type !== "instrument"), // Only manual events
             annotations: projectState.annotations
           }
         });
@@ -242,14 +242,21 @@ export default function Home() {
       const uploadedVideoUrlsStr = sessionStorage.getItem("uploadedVideoUrls");
       const caseSetupStr = localStorage.getItem("caseSetup");
 
+      console.log("SESSION VIDEO URLS RAW:", uploadedVideoUrlsStr);
+
       if (!uploadedVideoUrlsStr || !caseSetupStr) {
+        console.warn("No uploaded videos found in storage");
         return;
       }
 
       const uploadedVideoUrls = JSON.parse(uploadedVideoUrlsStr) as (string | null)[];
       const caseSetup = JSON.parse(caseSetupStr);
 
-      if (!Array.isArray(uploadedVideoUrls) || !caseSetup.videoSlots) {
+      console.log("PARSED VIDEO URLS:", uploadedVideoUrls);
+      console.log("CASE SETUP VIDEO SLOTS:", caseSetup?.videoSlots);
+
+      if (!Array.isArray(uploadedVideoUrls) || !Array.isArray(caseSetup.videoSlots)) {
+        console.error("Invalid uploaded video data");
         return;
       }
 
@@ -263,6 +270,7 @@ export default function Home() {
       caseSetup.videoSlots.forEach((slot: { position: number }) => {
         const url = uploadedVideoUrls[slot.position];
         if (url && slot.position >= 0 && slot.position < nextFeeds.length) {
+          console.log("SETTING VIDEO:", slot.position, url);
           nextFeeds[slot.position] = url;
         }
       });
@@ -309,7 +317,7 @@ export default function Home() {
   // Keyboard Shortcuts for Undo/Redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
         e.preventDefault();
         if (e.shiftKey) {
           if (canRedo) {
@@ -322,7 +330,7 @@ export default function Home() {
             toast.info("Undo");
           }
         }
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
         e.preventDefault();
         if (canRedo) {
           redo();
@@ -330,8 +338,8 @@ export default function Home() {
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo, canUndo, canRedo]);
 
   const handleCaptureSnapshot = () => {
@@ -466,7 +474,7 @@ export default function Home() {
     setTimeout(() => {
       // Assuming total duration is around 2100s or derived from phases
       const totalDuration = projectState.phases.length > 0 
-        ? projectState.phases[projectState.phases.length-1].endTime 
+        ? projectState.phases[projectState.phases.length - 1].endTime 
         : 2100;
       
       playerRef.current?.seekTo(time / totalDuration);
@@ -679,7 +687,7 @@ export default function Home() {
                     size="icon" 
                     className="h-6 w-6" 
                     title="Pop-out Window"
-                    onClick={() => togglePanel("right", false)} // Simulate pop-out by hiding docked panel
+                    onClick={() => togglePanel("right", false)}
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
                   </Button>
