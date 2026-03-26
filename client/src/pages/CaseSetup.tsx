@@ -20,11 +20,12 @@ export default function CaseSetup() {
   const [notes, setNotes] = useState("");
   const [questions, setQuestions] = useState<string[]>([""]);
   const [file, setFile] = useState<File | null>(null);
+  const FEED_LABELS = ["Room View", "Echo Monitor", "Surgical Field", "Instrument Table"];
   const [videoSlots, setVideoSlots] = useState<VideoSlot[]>([
-    { file: null, label: "Position 1 (Top-Left)", position: 0 },
-    { file: null, label: "Position 2 (Top-Right)", position: 1 },
-    { file: null, label: "Position 3 (Bottom-Left)", position: 2 },
-    { file: null, label: "Position 4 (Bottom-Right)", position: 3 }
+    { file: null, label: "Room View", position: 0 },
+    { file: null, label: "Echo Monitor", position: 1 },
+    { file: null, label: "Surgical Field", position: 2 },
+    { file: null, label: "Instrument Table", position: 3 }
   ]);
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
 
@@ -235,6 +236,21 @@ export default function CaseSetup() {
                         <div className="flex flex-col items-center gap-2 w-full">
                           <Video className="h-6 w-6 text-primary" />
                           <div className="flex-1 min-w-0">
+                            <select
+                              className="text-sm font-medium bg-transparent border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-1 cursor-pointer z-10 relative w-full"
+                              value={slot.label}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                const newSlots = [...videoSlots];
+                                newSlots[slot.position].label = e.target.value;
+                                setVideoSlots(newSlots);
+                              }}
+                            >
+                              {FEED_LABELS.map((label) => (
+                                <option key={label} value={label}>{label}</option>
+                              ))}
+                            </select>
                             <p className="text-sm font-medium truncate">{slot.file.name}</p>
                             <p className="text-xs text-muted-foreground">
                               {(slot.file.size / (1024 * 1024)).toFixed(2)} MB
@@ -254,7 +270,21 @@ export default function CaseSetup() {
                       ) : (
                         <>
                           <Video className="h-8 w-8 text-muted-foreground mb-2" />
-                          <p className="text-sm font-medium">{slot.label}</p>
+                          <select
+                            className="text-sm font-medium bg-transparent border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-1 cursor-pointer z-10 relative"
+                            value={slot.label}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              const newSlots = [...videoSlots];
+                              newSlots[slot.position].label = e.target.value;
+                              setVideoSlots(newSlots);
+                            }}
+                          >
+                            {FEED_LABELS.map((label) => (
+                              <option key={label} value={label}>{label}</option>
+                            ))}
+                          </select>
                           <p className="text-xs text-muted-foreground">Click or drag video here</p>
                         </>
                       )}

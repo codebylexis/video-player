@@ -91,7 +91,7 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [internalLayout, setInternalLayout] = useState<"single" | "split" | "quad" | "tri">("single");
-  const layout = controlledLayout || internalLayout;
+  const layout = internalLayout;
 
   const [activeView, setActiveView] = useState(0);
   const [splitViews, setSplitViews] = useState<[number, number]>([0, 1]);
