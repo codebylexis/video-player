@@ -5,7 +5,6 @@ import {
   Activity,
   ChevronDown,
   FastForward,
-  Filter,
   Grid2x2,
   Layout,
   Maximize,
@@ -481,29 +480,29 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
                         const label = labels?.[feedIndex] ?? `CAM ${feedIndex + 1}`;
                         return (
                           <DropdownMenuItem
-                          key={feedIndex}
-                          onClick={() => {
-                            const newMapping = [...feedMapping];
-                            const currentFeed = newMapping[index];
-                            const existingPosition = newMapping.findIndex(
-                              (feed, idx) => feed === feedIndex && idx !== index
-                            );
-                            
-                            if (existingPosition !== -1) {
-                              newMapping[existingPosition] = currentFeed;
-                              triggerSwapAnimation(index, existingPosition);
-                            }
-                            
-                            newMapping[index] = feedIndex;
-                            setFeedMapping(newMapping);
-                          }}
-                          className="cursor-pointer"
-                        >
-                          {label}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </DropdownMenuContent>
+                            key={feedIndex}
+                            onClick={() => {
+                              const newMapping = [...feedMapping];
+                              const currentFeed = newMapping[index];
+                              const existingPosition = newMapping.findIndex(
+                                (feed, idx) => feed === feedIndex && idx !== index
+                              );
+
+                              if (existingPosition !== -1) {
+                                newMapping[existingPosition] = currentFeed;
+                                triggerSwapAnimation(index, existingPosition);
+                              }
+
+                              newMapping[index] = feedIndex;
+                              setFeedMapping(newMapping);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            {label}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
 
@@ -631,31 +630,25 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
             <div className="text-xs font-mono text-muted-foreground bg-secondary/30 px-2 py-1 rounded">
               {formatTime(played * (duration || 1))} / {formatTime(duration || 1)}
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={() => console.log("Mark In")}
+            >
+              Mark In
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={() => console.log("Mark Out")}
+            >
+              Mark Out
+            </Button>
           </div>
 
           <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Filter className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <Label className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  Visible Instruments
-                </Label>
-                {uniqueInstrumentLabels.map((label) => (
-                  <DropdownMenuCheckboxItem
-                    key={label}
-                    checked={visibleInstruments.includes(label)}
-                    onCheckedChange={() => toggleInstrumentVisibility(label)}
-                  >
-                    {label}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
             <div className="h-4 w-px bg-border mx-1" />
 
             <div className="flex bg-secondary/30 rounded-lg p-0.5">
