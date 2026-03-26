@@ -663,7 +663,7 @@ export default function Home() {
             </div>
           </ResizablePanel>
 
-          {/* Right Sidebar: Unified Event Logger */}
+          {/* Right Sidebar: Unified Surgical Cockpit */}
           {visiblePanels.right && logViewMode === "docked" && <ResizableHandle className="bg-slate-800" />}
           
           {visiblePanels.right && logViewMode === "docked" && (
@@ -671,7 +671,7 @@ export default function Home() {
               <div className="p-3 border-b border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-2 font-medium text-slate-200">
                   <Clock className="h-4 w-4 text-teal-400" />
-                  Event Logger
+                  Surgical Cockpit
                 </div>
                 <div className="flex items-center gap-1">
                   <Button 
