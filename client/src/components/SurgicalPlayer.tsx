@@ -91,6 +91,7 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
   const [played, setPlayed] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [markState, setMarkState] = useState<"none" | "in" | "out">("none");
   const [internalLayout, setInternalLayout] = useState<"single" | "split" | "quad" | "tri">(controlledLayout || "single");
   const layout = internalLayout;
 
@@ -308,6 +309,12 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
         if (onTimeUpdate) onTimeUpdate(newTime);
       }
     }
+  };
+
+  const handleMark = () => {
+    if (markState === "none") setMarkState("in");
+    else if (markState === "in") setMarkState("out");
+    else setMarkState("none");
   };
 
   const handleViewClick = (index: number) => {
@@ -633,18 +640,16 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
             <Button
               variant="outline"
               size="sm"
-              className="h-8"
-              onClick={() => console.log("Mark In")}
+              className={cn(
+                "h-8 transition-colors",
+                markState === "in" && "bg-green-500/20 border-green-500 text-green-400",
+                markState === "out" && "bg-red-500/20 border-red-500 text-red-400"
+              )}
+              onClick={handleMark}
             >
-              Mark In
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8"
-              onClick={() => console.log("Mark Out")}
-            >
-              Mark Out
+              {markState === "none" && "Mark"}
+              {markState === "in" && "Mark In"}
+              {markState === "out" && "Mark Out"}
             </Button>
           </div>
 
