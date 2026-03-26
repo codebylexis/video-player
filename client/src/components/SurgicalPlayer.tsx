@@ -43,6 +43,7 @@ import {
 
 interface SurgicalPlayerProps {
   urls: string[];
+  labels?: string[];
   className?: string;
   onTimeUpdate?: (time: number) => void;
   customInstruments?: InstrumentUsage[];
@@ -70,6 +71,7 @@ const FEED_OPTIONS = [
 export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>((props, ref) => {
   const {
     urls,
+    labels,
     className,
     onTimeUpdate,
     customInstruments,
@@ -470,46 +472,38 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
                         size="sm"
                         className="h-7 px-2 bg-black/60 hover:bg-black/80 text-white text-[11px] font-mono gap-1 border border-white/20"
                       >
-                        <span>{FEED_OPTIONS[feedMapping[index]]?.label || `CAM ${index + 1}`}</span>
+                        <span>{labels?.[feedMapping[index]] ?? `CAM ${index + 1}`}</span>
                         <ChevronDown className="h-3 w-3" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-48">
-                      {FEED_OPTIONS.map((option) => {
-                        const isUsedElsewhere = feedMapping.some(
-                          (feed, idx) => feed === option.id && idx !== index
-                        );
-
+                      {urls.map((_, feedIndex) => {
+                        const label = labels?.[feedIndex] ?? `CAM ${feedIndex + 1}`;
                         return (
                           <DropdownMenuItem
-                            key={option.id}
-                            onClick={() => {
-                              if (isUsedElsewhere) return;
-
-                              const newMapping = [...feedMapping];
-                              const currentFeed = newMapping[index];
-                              const existingPosition = newMapping.findIndex(
-                                (feed, idx) => feed === option.id && idx !== index
-                              );
-
-                              if (existingPosition !== -1) {
-                                newMapping[existingPosition] = currentFeed;
-                                triggerSwapAnimation(index, existingPosition);
-                              }
-
-                              newMapping[index] = option.id;
-                              setFeedMapping(newMapping);
-                            }}
-                            disabled={isUsedElsewhere}
-                            className={cn("cursor-pointer", isUsedElsewhere && "opacity-50 cursor-not-allowed")}
-                          >
-                            <option.icon className="h-4 w-4 mr-2" />
-                            {option.label}
-                            {isUsedElsewhere && <span className="ml-2 text-xs">(in use)</span>}
-                          </DropdownMenuItem>
-                        );
-                      })}
-                    </DropdownMenuContent>
+                          key={feedIndex}
+                          onClick={() => {
+                            const newMapping = [...feedMapping];
+                            const currentFeed = newMapping[index];
+                            const existingPosition = newMapping.findIndex(
+                              (feed, idx) => feed === feedIndex && idx !== index
+                            );
+                            
+                            if (existingPosition !== -1) {
+                              newMapping[existingPosition] = currentFeed;
+                              triggerSwapAnimation(index, existingPosition);
+                            }
+                            
+                            newMapping[index] = feedIndex;
+                            setFeedMapping(newMapping);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          {label}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
 

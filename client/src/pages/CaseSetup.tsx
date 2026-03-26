@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { FileText, Upload, ArrowRight, Plus, Trash2, Video, X } from "lucide-react";
 import { toast } from "sonner";
-import { setVideoUrls } from "@/lib/videoStore";
+import { setVideoUrls, setVideoLabels } from "@/lib/videoStore";
 
 interface VideoSlot {
   file: File | null;
@@ -133,6 +133,7 @@ export default function CaseSetup() {
 
     toast.success("Case initialized with " + uploadedVideos.length + " video(s)");
     setVideoUrls(videoUrls);
+    setVideoLabels(videoSlots.map((slot) => slot.label));
     setLocation("/analysis");
   };
 

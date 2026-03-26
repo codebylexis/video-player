@@ -1,5 +1,5 @@
-// Simple in-memory store to pass video URLs between pages
 let pendingVideoUrls: (string | null)[] = [];
+let pendingVideoLabels: string[] = [];
 
 export const setVideoUrls = (urls: (string | null)[]) => {
   pendingVideoUrls = urls;
@@ -7,4 +7,12 @@ export const setVideoUrls = (urls: (string | null)[]) => {
 
 export const getVideoUrls = (): (string | null)[] => {
   return pendingVideoUrls;
+};
+
+export const setVideoLabels = (labels: string[]) => {
+  pendingVideoLabels = labels;
+};
+
+export const getVideoLabels = (): string[] => {
+  return pendingVideoLabels;
 };

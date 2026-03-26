@@ -15,7 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useHistory } from "@/hooks/useHistory";
 import { useLocation } from "wouter";
-import { getVideoUrls } from "@/lib/videoStore";
+import { getVideoUrls, getVideoLabels } from "@/lib/videoStore";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import {
   DropdownMenu,
@@ -63,6 +63,9 @@ export default function Home() {
     "/placeholders/echo-monitor.jpg",
     "/placeholders/instrument-table.jpg",
     "/placeholders/room-view.png"
+  ]);
+  const [videoLabels, setVideoLabels] = useState<string[]>([
+    "Room View", "Echo Monitor", "Surgical Field", "Instrument Table"
   ]);
   
   // Preferences
@@ -262,6 +265,11 @@ export default function Home() {
     });
 
     setVideoFeeds(nextFeeds);
+    const labels = getVideoLabels();
+    if (labels.length > 0) {
+      setVideoLabels(labels);
+    }
+
   }, []);
 
   // Pop-out Window Logic
@@ -642,6 +650,7 @@ export default function Home() {
               <SurgicalPlayer 
                 ref={playerRef}
                 urls={videoFeeds}
+                labels={videoLabels}
                 className="h-full w-full"
                 onTimeUpdate={setCurrentTime}
                 customInstruments={projectState.instruments}
