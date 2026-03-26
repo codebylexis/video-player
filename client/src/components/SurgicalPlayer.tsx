@@ -151,6 +151,18 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
   }, []);
 
   useEffect(() => {
+    playerRefs.current.forEach((player, index) => {
+      if (player && player instanceof HTMLVideoElement) {
+        if (playing) {
+          player.play().catch((e) => console.error("Play failed:", e));
+        } else {
+          player.pause();
+        }
+      }
+    });
+  }, [playing]);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName)) return;
 
