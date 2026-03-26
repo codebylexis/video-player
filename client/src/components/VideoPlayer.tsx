@@ -94,7 +94,6 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only trigger if no input is focused
       if (["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName)) return;
 
       switch (e.key.toLowerCase()) {
@@ -143,7 +142,6 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
     }, 3000);
   };
 
-  // Create a wrapper component to handle the ref forwarding issue
   const Player = ReactPlayer as any;
 
   return (
@@ -157,10 +155,8 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
       onMouseLeave={() => playing && setShowControls(false)}
       onDoubleClick={toggleFullscreen}
     >
-      {/* CRT Scanline Effect */}
       <div className="scanline pointer-events-none z-10" />
 
-      {/* Video Layer */}
       <Player
         ref={playerRef}
         url={url}
@@ -174,15 +170,13 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
         style={{ position: "absolute", top: 0, left: 0 }}
       />
 
-      {/* Controls Overlay */}
       <div
         className={cn(
           "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-4 pt-12 transition-opacity duration-300 z-20",
           showControls ? "opacity-100" : "opacity-0"
         )}
-        onClick={(e: React.MouseEvent) => e.stopPropagation()} // Prevent double-click propagation
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
-        {/* Progress Bar */}
         <div className="mb-4 flex items-center gap-2 group/slider">
           <Slider
             value={[played]}
@@ -193,10 +187,8 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
           />
         </div>
 
-        {/* Control Panel */}
         <div className="flex items-center justify-between font-mono text-primary">
           <div className="flex items-center gap-4">
-            {/* Play/Pause */}
             <Button
               variant="ghost"
               size="icon"
@@ -206,7 +198,6 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
               {playing ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
             </Button>
 
-            {/* Rewind/Fast Forward */}
             <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
@@ -226,7 +217,6 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
               </Button>
             </div>
 
-            {/* Volume */}
             <div className="flex items-center gap-2 group/volume">
               <Button
                 variant="ghost"
@@ -251,16 +241,33 @@ export function VideoPlayer({ url, className }: VideoPlayerProps) {
               </div>
             </div>
 
-            {/* Timecode */}
             <div className="text-sm tracking-widest opacity-80">
               <span className="text-primary">{formatTime(played * duration)}</span>
               <span className="mx-1 text-muted-foreground">/</span>
               <span className="text-muted-foreground">{formatTime(duration)}</span>
             </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 border-primary/40 bg-black/40 text-primary hover:bg-primary/20 hover:text-primary"
+                onClick={() => console.log("Mark In")}
+              >
+                Mark In
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 border-primary/40 bg-black/40 text-primary hover:bg-primary/20 hover:text-primary"
+                onClick={() => console.log("Mark Out")}
+              >
+                Mark Out
+              </Button>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Fullscreen */}
             <Button
               variant="ghost"
               size="icon"
