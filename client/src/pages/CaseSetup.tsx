@@ -29,6 +29,10 @@ export default function CaseSetup() {
   ]);
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
 
+  const isPresetLabel = (label: string) => FEED_LABELS.includes(label);
+  const getSelectValue = (label: string) => (label === "" || !isPresetLabel(label) ? "custom" : label);
+  const shouldShowCustomInput = (label: string) => label === "" || !isPresetLabel(label);
+
   const handleAddQuestion = () => {
     setQuestions([...questions, ""]);
   };
@@ -74,7 +78,7 @@ export default function CaseSetup() {
         const newSlots = [...videoSlots];
         newSlots[slotIndex].file = droppedFile;
         setVideoSlots(newSlots);
-        toast.success(`Video dropped in ${newSlots[slotIndex].label}`);
+        toast.success(`Video dropped in ${newSlots[slotIndex].label || "Custom Feed"}`);
       } else {
         toast.error(`${droppedFile.name} is not a video file`);
       }
@@ -88,7 +92,7 @@ export default function CaseSetup() {
         const newSlots = [...videoSlots];
         newSlots[slotIndex].file = selectedFile;
         setVideoSlots(newSlots);
-        toast.success(`Video added to ${newSlots[slotIndex].label}`);
+        toast.success(`Video added to ${newSlots[slotIndex].label || "Custom Feed"}`);
       } else {
         toast.error(`${selectedFile.name} is not a video file`);
       }
@@ -100,6 +104,18 @@ export default function CaseSetup() {
     newSlots[slotIndex].file = null;
     setVideoSlots(newSlots);
     toast.success("Video removed");
+  };
+
+  const handleSlotLabelChange = (slotIndex: number, value: string) => {
+    const newSlots = [...videoSlots];
+    newSlots[slotIndex].label = value === "custom" ? "" : value;
+    setVideoSlots(newSlots);
+  };
+
+  const handleCustomLabelChange = (slotIndex: number, value: string) => {
+    const newSlots = [...videoSlots];
+    newSlots[slotIndex].label = value;
+    setVideoSlots(newSlots);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -127,13 +143,15 @@ export default function CaseSetup() {
         position: slot.position,
         fileName: slot.file ? slot.file.name : null,
         fileSize: slot.file ? slot.file.size : null,
-        label: slot.label
+        label: slot.label.trim() !== "" ? slot.label : `Feed ${slot.position + 1}`
       }))
     }));
 
     toast.success("Case initialized with " + uploadedVideos.length + " video(s)");
     setVideoUrls(videoUrls);
-    setVideoLabels(videoSlots.map((slot) => slot.label));
+    setVideoLabels(
+      videoSlots.map((slot) => (slot.label.trim() !== "" ? slot.label : `Feed ${slot.position + 1}`))
+    );
     setLocation("/analysis");
   };
 
@@ -235,22 +253,35 @@ export default function CaseSetup() {
                       {slot.file ? (
                         <div className="flex flex-col items-center gap-2 w-full">
                           <Video className="h-6 w-6 text-primary" />
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 w-full">
                             <select
-                              className="text-sm font-medium bg-transparent border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-1 cursor-pointer z-10 relative w-full"
-                              value={slot.label}
+                              className="text-sm font-medium bg-transparent border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-2 cursor-pointer z-10 relative w-full"
+                              value={getSelectValue(slot.label)}
                               onClick={(e) => e.stopPropagation()}
                               onChange={(e) => {
                                 e.stopPropagation();
-                                const newSlots = [...videoSlots];
-                                newSlots[slot.position].label = e.target.value;
-                                setVideoSlots(newSlots);
+                                handleSlotLabelChange(slot.position, e.target.value);
                               }}
                             >
                               {FEED_LABELS.map((label) => (
                                 <option key={label} value={label}>{label}</option>
                               ))}
+                              <option value="custom">Custom...</option>
                             </select>
+
+                            {shouldShowCustomInput(slot.label) && (
+                              <Input
+                                placeholder="Type custom video name..."
+                                className="mb-2 text-center"
+                                value={slot.label}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  handleCustomLabelChange(slot.position, e.target.value);
+                                }}
+                              />
+                            )}
+
                             <p className="text-sm font-medium truncate">{slot.file.name}</p>
                             <p className="text-xs text-muted-foreground">
                               {(slot.file.size / (1024 * 1024)).toFixed(2)} MB
@@ -271,66 +302,34 @@ export default function CaseSetup() {
                         <>
                           <Video className="h-8 w-8 text-muted-foreground mb-2" />
                           <select
-                            className="text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-1 z-10 relative w-full cursor-pointer"
-                            value={["Room View", "Echo Monitor", "Surgical Field", "Instrument Table"].includes(slot.label) ? slot.label : "custom"}
+                            className="text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-2 z-10 relative w-full cursor-pointer"
+                            value={getSelectValue(slot.label)}
                             onClick={(e) => e.stopPropagation()}
                             onChange={(e) => {
                               e.stopPropagation();
-                              const newSlots = [...videoSlots];
-                              if (e.target.value !== "custom") {
-                                newSlots[slot.position].label = e.target.value;
-                                setVideoSlots(newSlots);
-                              }
+                              handleSlotLabelChange(slot.position, e.target.value);
                             }}
                           >
-                            <option value="Room View">Room View</option>
-                            <option value="Echo Monitor">Echo Monitor</option>
-                            <option value="Surgical Field">Surgical Field</option>
-                            <option value="Instrument Table">Instrument Table</option>
+                            {FEED_LABELS.map((label) => (
+                              <option key={label} value={label}>{label}</option>
+                            ))}
                             <option value="custom">Custom...</option>
                           </select>
 
-                          {!["Room View", "Echo Monitor", "Surgical Field", "Instrument Table"].includes(slot.label) && (
-                            <>
-                              <select
-                                className="text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-1 z-10 relative w-full cursor-pointer"
-                                value={["Room View", "Echo Monitor", "Surgical Field", "Instrument Table"].includes(slot.label) ? slot.label : "custom"}
-                                onClick={(e) => e.stopPropagation()}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  const newSlots = [...videoSlots];
-                                  if (e.target.value !== "custom") {
-                                    newSlots[slot.position].label = e.target.value;
-                                    setVideoSlots(newSlots);
-                                  }
-                                }}
-                              >
-                                <option value="Room View">Room View</option>
-                                <option value="Echo Monitor">Echo Monitor</option>
-                                <option value="Surgical Field">Surgical Field</option>
-                                <option value="Instrument Table">Instrument Table</option>
-                                <option value="custom">Custom...</option>
-                              </select>
-
-                              {(slot.label === "custom" || !["Room View", "Echo Monitor", "Surgical Field", "Instrument Table"].includes(slot.label)) && (
-                                <input
-                                  type="text"
-                                  placeholder="Type custom name..."
-                                  className="text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-1 z-10 relative w-full text-center"
-                                  value={["Room View", "Echo Monitor", "Surgical Field", "Instrument Table"].includes(slot.label) ? "" : slot.label}
-                                  onClick={(e) => e.stopPropagation()}
-                                  onChange={(e) => {
-                                    e.stopPropagation();
-                                    const newSlots = [...videoSlots];
-                                    newSlots[slot.position].label = e.target.value;
-                                    setVideoSlots(newSlots);
-                                  }}
-                                />
-                              )}
-
-                              <p className="text-xs text-muted-foreground">Click or drag video here</p>
-                            </>
+                          {shouldShowCustomInput(slot.label) && (
+                            <Input
+                              placeholder="Type custom video name..."
+                              className="mb-2 text-center z-10 relative"
+                              value={slot.label}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleCustomLabelChange(slot.position, e.target.value);
+                              }}
+                            />
                           )}
+
+                          <p className="text-xs text-muted-foreground">Click or drag video here</p>
                         </>
                       )}
                     </div>
