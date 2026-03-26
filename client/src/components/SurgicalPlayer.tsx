@@ -90,8 +90,14 @@ export const SurgicalPlayer = forwardRef<SurgicalPlayerRef, SurgicalPlayerProps>
   const [played, setPlayed] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [internalLayout, setInternalLayout] = useState<"single" | "split" | "quad" | "tri">("single");
+  const [internalLayout, setInternalLayout] = useState<"single" | "split" | "quad" | "tri">(controlledLayout || "single");
   const layout = internalLayout;
+
+  useEffect(() => {
+    if (controlledLayout) {
+      setInternalLayout(controlledLayout);
+    }
+  }, [controlledLayout]);
 
   const [activeView, setActiveView] = useState(0);
   const [splitViews, setSplitViews] = useState<[number, number]>([0, 1]);
