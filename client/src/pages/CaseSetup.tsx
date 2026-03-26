@@ -137,7 +137,6 @@ export default function CaseSetup() {
     setLocation("/analysis");
   };
 
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -272,21 +271,66 @@ export default function CaseSetup() {
                         <>
                           <Video className="h-8 w-8 text-muted-foreground mb-2" />
                           <select
-                            className="text-sm font-medium bg-transparent border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-1 cursor-pointer z-10 relative"
-                            value={slot.label}
+                            className="text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-1 z-10 relative w-full cursor-pointer"
+                            value={["Room View", "Echo Monitor", "Surgical Field", "Instrument Table"].includes(slot.label) ? slot.label : "custom"}
                             onClick={(e) => e.stopPropagation()}
                             onChange={(e) => {
                               e.stopPropagation();
                               const newSlots = [...videoSlots];
-                              newSlots[slot.position].label = e.target.value;
-                              setVideoSlots(newSlots);
+                              if (e.target.value !== "custom") {
+                                newSlots[slot.position].label = e.target.value;
+                                setVideoSlots(newSlots);
+                              }
                             }}
                           >
-                            {FEED_LABELS.map((label) => (
-                              <option key={label} value={label}>{label}</option>
-                            ))}
+                            <option value="Room View">Room View</option>
+                            <option value="Echo Monitor">Echo Monitor</option>
+                            <option value="Surgical Field">Surgical Field</option>
+                            <option value="Instrument Table">Instrument Table</option>
+                            <option value="custom">Custom...</option>
                           </select>
-                          <p className="text-xs text-muted-foreground">Click or drag video here</p>
+
+                          {!["Room View", "Echo Monitor", "Surgical Field", "Instrument Table"].includes(slot.label) && (
+                            <>
+                              <select
+                                className="text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-1 z-10 relative w-full cursor-pointer"
+                                value={["Room View", "Echo Monitor", "Surgical Field", "Instrument Table"].includes(slot.label) ? slot.label : "custom"}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  const newSlots = [...videoSlots];
+                                  if (e.target.value !== "custom") {
+                                    newSlots[slot.position].label = e.target.value;
+                                    setVideoSlots(newSlots);
+                                  }
+                                }}
+                              >
+                                <option value="Room View">Room View</option>
+                                <option value="Echo Monitor">Echo Monitor</option>
+                                <option value="Surgical Field">Surgical Field</option>
+                                <option value="Instrument Table">Instrument Table</option>
+                                <option value="custom">Custom...</option>
+                              </select>
+
+                              {(slot.label === "custom" || !["Room View", "Echo Monitor", "Surgical Field", "Instrument Table"].includes(slot.label)) && (
+                                <input
+                                  type="text"
+                                  placeholder="Type custom name..."
+                                  className="text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded px-2 py-1 mb-1 z-10 relative w-full text-center"
+                                  value={["Room View", "Echo Monitor", "Surgical Field", "Instrument Table"].includes(slot.label) ? "" : slot.label}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    const newSlots = [...videoSlots];
+                                    newSlots[slot.position].label = e.target.value;
+                                    setVideoSlots(newSlots);
+                                  }}
+                                />
+                              )}
+
+                              <p className="text-xs text-muted-foreground">Click or drag video here</p>
+                            </>
+                          )}
                         </>
                       )}
                     </div>
